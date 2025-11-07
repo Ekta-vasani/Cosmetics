@@ -130,7 +130,7 @@
 </style>
 
 {% javascript %}
-  $('.cfp-variant-select').on('change', function () {
+  $(document).on('change','.cfp-variant-select', function () {
     var selectedOption = $(this).find('option:selected');
     var price = selectedOption.data('price');
     var imageSrc = selectedOption.data('image');
