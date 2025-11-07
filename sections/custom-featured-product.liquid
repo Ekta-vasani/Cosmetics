@@ -1,0 +1,335 @@
+{% assign featured_product = all_products[section.settings.product] %}
+
+<section id="featured-product-{{ section.id }}" class="cfp-section">
+  {% if featured_product %}
+    <div class="cfp-grid">
+      {% if section.settings.show_image and featured_product.featured_image %}
+        <div class="cfp-media cfp-media--{{ section.settings.image_alignment }}">
+          <img
+            src="{{ featured_product.featured_image | img_url: section.settings.image_size }}"
+            srcset="{{ featured_product.featured_image | img_url: section.settings.image_size }} 1x"
+            alt="{{ featured_product.featured_image.alt | escape }}"
+            class="cfp-image"
+            data-product-id="{{ featured_product.id }}"
+          >
+        </div>
+      {% endif %}
+
+      <div class="cfp-info">
+        {% if section.settings.show_vendor and featured_product.vendor %}
+          <div class="cfp-vendor">{{ featured_product.vendor }}</div>
+        {% endif %}
+
+        {% if section.settings.show_title %}
+          <h2 class="cfp-title">{{ featured_product.title }}</h2>
+        {% endif %}
+
+        {% if section.settings.show_price %}
+          <div class="cfp-price" id="cfp-price-{{ section.id }}">
+            {% if featured_product.price > 0 %}
+              {{ featured_product.price | money }}
+            {% else %}
+              {{ 'products.general.free' | t }}
+            {% endif %}
+          </div>
+        {% endif %}
+
+        {% if section.settings.show_sku %}
+          <div class="cfp-sku" id="cfp-sku-{{ section.id }}">
+            {% assign first_variant = featured_product.variants.first %}
+            {% if first_variant and first_variant.sku != blank %}
+              SKU: <span class="cfp-sku-value">{{ first_variant.sku }}</span>
+            {% endif %}
+          </div>
+        {% endif %}
+
+        {% if section.settings.show_variants and featured_product.variants.size > 1 %}
+          <label for="cfp-variant-{{ section.id }}" class="cfp-variant-label">Variants</label>
+          <select
+            id="cfp-variant-{{ section.id }}"
+            class="cfp-variant-select"
+            aria-label="{{ featured_product.title }}"
+          >
+            {% for variant in featured_product.variants %}
+              <option
+                value="{{ variant.id }}"
+                data-price="{{ variant.price | money }}"
+                data-sku="{{ variant.sku }}"
+                data-image="{% if variant.featured_image %}{{ variant.featured_image | img_url: section.settings.image_size }}{% endif %}"
+                {% if variant.available == false %}
+                  data-available="false"
+                {% endif %}
+              >
+                {{ variant.title -}}
+                {%- if variant.available == false %} — {{ 'products.product.sold_out' | t }}{% endif %}
+              </option>
+            {% endfor %}
+          </select>
+        {% endif %}
+
+        {% if section.settings.show_description and featured_product.description != blank %}
+          <div class="cfp-description">
+            {% if section.settings.description_limit > 0 %}
+              {{ featured_product.description | strip_html | truncate: section.settings.description_limit }}
+            {% else %}
+              {{ featured_product.description | strip_html }}
+            {% endif %}
+          </div>
+        {% endif %}
+
+        <div class="selling_plan_groups">
+          {% if featured_product.selling_plan_groups.size > 0 %}
+            {% for selling_plan_group in featured_product.selling_plan_groups %}
+              <select class="selling-plan-group-select">
+                {% for selling_plan in selling_plan_group.selling_plans %}
+                  <option value="{{ selling_plan.id }}">
+                    {{ selling_plan.name }}
+                  </option>
+                {% endfor %}
+              </select>
+            {% endfor %}
+          {% endif %}
+        </div>
+        <div
+          class="cfp-actions"
+          aria-hidden="true"
+          style="cursor:pointer; background:pink; padding:10px; width:fit-content;"
+          data-varaint="{{featured_product.selected_or_first_available_variant.id}}"
+          data-sellingId="{{ featured_product.selling_plan_groups[0].selling_plans[0].id }}"
+        >
+          Add to cart
+        </div>
+      </div>
+    </div>
+  {% else %}
+    <div class="cfp-empty">No product selected</div>
+  {% endif %}
+</section>
+
+<style>
+  /* Basic styling for the featured product section */
+  #featured-product-{{ section.id }} { --cfp-gap: 24px; padding: 24px 0; }
+  .cfp-grid { display:flex; gap:var(--cfp-gap); align-items:flex-start; flex-wrap:wrap; }
+  .cfp-media { flex:1 1 320px; max-width:540px; }
+  .cfp-media--left { order:0; }
+  .cfp-media--right { order:1; }
+  .cfp-image { width:100%; height:auto; display:block; object-fit:cover; border-radius:6px; }
+  .cfp-info { flex:1 1 300px; min-width:260px; }
+  .cfp-vendor { color:#6b7280; font-size:13px; margin-bottom:6px; }
+  .cfp-title { margin:0 0 8px 0; font-size:22px; line-height:1.2; }
+  .cfp-price { font-weight:700; margin-bottom:8px; font-size:18px; }
+  .cfp-sku { color:#6b7280; font-size:13px; margin-bottom:10px; }
+  .cfp-variant-label { display:block; font-size:13px; margin-bottom:6px; }
+  .cfp-variant-select { padding:8px; border:1px solid #d1d5db; border-radius:4px; width:100%; max-width:320px; margin-bottom:12px; }
+  .cfp-description { color:#4b5563; font-size:14px; line-height:1.5; }
+  .cfp-empty { color:#6b7280; padding:16px; background:#f9fafb; border-radius:6px; }
+  @media (max-width:740px) {
+      .cfp-grid { flex-direction:column; }
+      .cfp-media, .cfp-info { max-width:100%; }
+  }
+</style>
+
+{% javascript %}
+  $(document).on('change','.cfp-variant-select', function () {
+    var selectedOption = $(this).find('option:selected');
+    var price = selectedOption.data('price');
+    var imageSrc = selectedOption.data('image');
+    var available = selectedOption.data('available');
+    var currentVariantId = $(this).val();
+
+    // Update price
+    $('.cfp-price').text(price);
+
+    // Update image
+    if (imageSrc) {
+      $('.cfp-image').attr('src', imageSrc);
+      $('.cfp-image').attr('srcset', imageSrc);
+    }
+
+    //update ATC
+    $('.cfp-actions').attr('data-varaint', currentVariantId);
+  });
+
+  $('.selling-plan-group-select').on('change', function () {
+    var sellingPlanId = $(this).val();
+
+    //update ATC
+    $('.cfp-actions').attr('data-sellingid', sellingPlanId);
+  });
+
+  $('.cfp-actions').on('click', function () {
+    var varaintId = $(this).data('varaint');
+    var selingPlanId = $(this).data('sellingid');
+    addTocart(varaintId, selingPlanId);
+  });
+
+  function addTocart(varaintId, selingPlanId) {
+    const cartDrawer = document.querySelector('cart-drawer');
+    const sections = cartDrawer.getSectionsToRender().map((section) => section.id);
+    const section_url = window.location.pathname;
+    $.ajax({
+      type: 'POST',
+      url: '/cart/add.js',
+      data: {
+        items: [
+          {
+            id: varaintId,
+            selling_plan: selingPlanId,
+            quantity: 1,
+          },
+        ],
+        sections: sections,
+        sections_url: section_url,
+      },
+      dataType: 'json',
+      success: function (response) {
+        cartDrawer.renderContents(response);
+        if (cartDrawer && cartDrawer.classList.contains('is-empty')) {
+          cartDrawer.classList.remove('is-empty');
+        }
+        cartDrawer.open();
+      },
+      error: function () {
+        alert('There was an error adding the product to the cart.');
+      },
+    });
+  }
+
+
+  // Change the selling plan id
+$(document).on('change', '.cart-selling-plan-group-select', function() {
+    var lineItemKey = $(this).data('itemkey');
+    var newSellingPlanId = $(this).val();
+    var variantId = $(this).data('variantid');
+    const cartDrawer = document.querySelector('cart-drawer');
+    const sections = cartDrawer.getSectionsToRender().map((section) => section.id);
+    const section_url = window.location.pathname;
+
+    console.log('Old Selling Plan ID:', lineItemKey);
+
+  $.ajax({
+    type :'Post',
+    url:'/cart/change.js',
+    dataType:'json',
+    data:{
+        id: lineItemKey,
+        quantity: 0,
+        sections: sections,
+        sections_url: section_url,
+    },
+    success: function() {
+      $.ajax({
+        type :'Post',
+        url:'/cart/add.js',
+        dataType:'json',
+        data:{
+            id: variantId,
+            quantity: 1,
+            selling_plan:newSellingPlanId,
+            sections: sections,
+            sections_url: section_url,
+        },
+        success: function(response) {
+          cartDrawer.renderContents(response);
+        },
+        error: function() {
+          console.log('There was an error add the selling plan in the cart.');
+        },
+      });
+    },
+    error: function() {
+        console.log('There was an error remove selling plan id.');
+    }, 
+  });
+});
+
+
+{% endjavascript %}
+
+{% schema %}
+{
+  "name": "Custom Featured Product",
+  "settings": [
+    {
+      "type": "product",
+      "id": "product",
+      "label": "Product"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_image",
+      "label": "Show image",
+      "default": true
+    },
+    {
+      "type": "select",
+      "id": "image_size",
+      "label": "Image size",
+      "default": "480x480",
+      "options": [
+        { "value": "480x480", "label": "Small (480x480)" },
+        { "value": "800x800", "label": "Medium (800x800)" },
+        { "value": "1600x1600", "label": "Large (1600x1600)" }
+      ]
+    },
+    {
+      "type": "select",
+      "id": "image_alignment",
+      "label": "Image position",
+      "default": "left",
+      "options": [
+        { "value": "left", "label": "Left" },
+        { "value": "right", "label": "Right" }
+      ]
+    },
+    {
+      "type": "checkbox",
+      "id": "show_title",
+      "label": "Show title",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_vendor",
+      "label": "Show vendor",
+      "default": false
+    },
+    {
+      "type": "checkbox",
+      "id": "show_price",
+      "label": "Show price",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_sku",
+      "label": "Show SKU",
+      "default": false
+    },
+    {
+      "type": "checkbox",
+      "id": "show_variants",
+      "label": "Show variant selector",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_description",
+      "label": "Show description",
+      "default": true
+    },
+    {
+      "type": "number",
+      "id": "description_limit",
+      "label": "Description character limit (0 = no limit)",
+      "default": 200
+    }
+  ],
+  "presets": [
+    {
+      "name": "Custom Featured Product",
+      "category": "Product"
+    }
+  ]
+}
+{% endschema %}

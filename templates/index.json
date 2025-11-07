@@ -258,6 +258,23 @@
       ],
       "name": "New Block Section",
       "settings": {}
+    },
+    "custom_featured_product_QMB9cR": {
+      "type": "custom-featured-product",
+      "name": "Custom Featured Product",
+      "settings": {
+        "product": "snowbord-variant",
+        "show_image": true,
+        "image_size": "480x480",
+        "image_alignment": "left",
+        "show_title": true,
+        "show_vendor": false,
+        "show_price": true,
+        "show_sku": false,
+        "show_variants": true,
+        "show_description": true,
+        "description_limit": 200
+      }
     }
   },
   "order": [
@@ -265,6 +282,7 @@
     "featured_collection",
     "f1552b18-6017-4231-810d-74e61da22c37",
     "38cdf60f-e431-43b5-aac3-7e6215447d67",
-    "new_block_section_949HW4"
+    "new_block_section_949HW4",
+    "custom_featured_product_QMB9cR"
   ]
 }
