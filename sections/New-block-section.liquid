@@ -1,0 +1,32 @@
+{% content_for 'blocks' %}
+{% comment %}
+{% assign accordion_entries = shop.metaobjects.test_accordion.values %}
+{% for data in accordion_entries %}
+  {{ data.title }}
+  {{ data.test_intiger }}
+{% endfor %}
+{% endcomment %}
+
+{% assign accordion_entry = product.metafields.custom.accordion.value %}
+{{ accordion_entry.title }}
+{% for data in accordion_entry %}
+   {{ data.title }}
+  {{ data.test_intiger }}
+{% endfor %}
+{% schema %}
+  {
+    "name": "New Block section",
+    "settings": [],
+    "blocks":[
+      {
+        "type":"@theme"
+      }
+     
+    ],
+    "presets": [
+      {
+        "name":"New Block Section"
+      }
+    ]
+  }
+{% endschema %}
