@@ -1,9 +1,3 @@
-{% comment %}
-Section: custom-featured-product
-Purpose: display a featured product (no add-to-cart). Includes image, title, vendor, price, SKU, description and a variant selector.
-Install: save as sections/custom-featured-product.liquid
-{% endcomment %}
-
 {% assign featured_product = all_products[section.settings.product] %}
 
 <section id="featured-product-{{ section.id }}" class="cfp-section">
@@ -50,7 +44,7 @@ Install: save as sections/custom-featured-product.liquid
                 {% endif %}
 
                 {% if section.settings.show_variants and featured_product.variants.size > 1 %}
-                    <label for="cfp-variant-{{ section.id }}" class="cfp-variant-label">{{ 'products.product.variant_label' | t }}</label>
+                    <label for="cfp-variant-{{ section.id }}" class="cfp-variant-label">Variants</label>
                     <select id="cfp-variant-{{ section.id }}" class="cfp-variant-select" aria-label="{{ featured_product.title }}">
                         {% for variant in featured_product.variants %}
                             <option
@@ -75,10 +69,14 @@ Install: save as sections/custom-featured-product.liquid
                         {% endif %}
                     </div>
                 {% endif %}
-
-                <!-- Hook / placeholder for custom add-to-cart etc. (user will implement) -->
-                <div class="cfp-actions" aria-hidden="true">
-                    <!-- Add your button/form here -->
+                
+                <div class="selling_plan_groups">
+                    {% if featured_product.selling_plan_groups.size > 0 %}
+                        
+                    {% endif %}
+                </div>
+                <div class="cfp-actions" aria-hidden="true" style="cursor:pointer; background:pink; padding:10px; width:fit-content;" data-varaint="{{featured_product.selected_or_first_available_variant.id}}">
+                    Add to cart
                 </div>
             </div>
         </div>
@@ -110,32 +108,29 @@ Install: save as sections/custom-featured-product.liquid
     }
 </style>
 
-<script>
-    (function() {
-        var select = document.getElementById('cfp-variant-{{ section.id }}');
-        if (!select) return;
 
-        var priceEl = document.getElementById('cfp-price-{{ section.id }}');
-        var skuEl = document.querySelector('#cfp-sku-{{ section.id }} .cfp-sku-value');
-        var imageEl = document.querySelector('#featured-product-{{ section.id }} .cfp-image');
+{% javascript %}
+  $('.cfp-variant-select').on('change', function() {
+    var selectedOption = $(this).find('option:selected');
+    var price = selectedOption.data('price');
+    var imageSrc = selectedOption.data('image');
+    var available = selectedOption.data('available');
+    var currentVariantId = $(this).val();
 
-        function onVariantChange() {
-            var opt = select.options[select.selectedIndex];
-            if (!opt) return;
-            var price = opt.getAttribute('data-price');
-            var sku = opt.getAttribute('data-sku');
-            var img = opt.getAttribute('data-image');
+    // Update price
+    $('.cfp-price').text(price);
 
-            if (priceEl && price) priceEl.textContent = price;
-            if (skuEl && sku) skuEl.textContent = sku;
-            if (imageEl && img) imageEl.src = img;
-        }
+    // Update image
+    if (imageSrc) {
+      $('.cfp-image').attr('src', imageSrc);
+      $('.cfp-image').attr('srcset', imageSrc);
+    }
+    
+    //update ATC 
+    $('.cfp-actions').attr('data-varaint', currentVariantId);
+  });
 
-        select.addEventListener('change', onVariantChange);
-        // initialize to current selection
-        onVariantChange();
-    })();
-</script>
+{% endjavascript %}
 
 {% schema %}
 {
@@ -214,7 +209,6 @@ Install: save as sections/custom-featured-product.liquid
             "id": "description_limit",
             "label": "Description character limit (0 = no limit)",
             "default": 200,
-            "min": 0
         }
     ],
     "presets": [
